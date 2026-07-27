@@ -5,16 +5,15 @@ namespace App\DTO;
 final readonly class MovieFilterData
 {
     public function __construct(
-        public ?string $search = null,
-        public ?int $genreId = null,
-        public ?int $yearFrom = null,
-        public ?int $yearTo = null,
-        public ?float $minRating = null,
-        public string $sortBy = 'created_at',
-        public string $sortDirection = 'desc',
-        public int $perPage = 15,
-    ) {
-    }
+        public string $title,
+        public ?string $description,
+        public int $releaseYear,
+        public ?int $durationMinutes,
+        public ?string $director,
+        public array $genreIds,
+        public ?int $addedBy = null,
+        public ?UploadedFile $poster = null,
+    ) {}
 
     public static function fromRequest(array $query): self
     {
