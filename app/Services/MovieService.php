@@ -25,7 +25,7 @@ class MovieService
         // Кэшируем только "холодные", часто повторяющиеся запросы первой страницы без поиска
         $isCacheable = $filters->search === null && $filters->genreId === null;
 
-        if (! $isCacheable) {
+        if (!$isCacheable) {
             return $this->movies->paginate($filters);
         }
 

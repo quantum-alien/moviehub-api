@@ -27,7 +27,7 @@ class ReviewService
         $existing = $this->reviews->findByMovieAndUser($data->movieId, $data->userId);
 
         if ($existing !== null) {
-            throw new ReviewAlreadyExistsException;
+            throw new ReviewAlreadyExistsException();
         }
 
         $review = $this->reviews->create($data->toPersistArray());

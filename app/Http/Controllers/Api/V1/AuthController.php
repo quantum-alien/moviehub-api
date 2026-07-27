@@ -54,7 +54,7 @@ class AuthController extends Controller
 
         $token = JWTAuth::attempt($credentials);
 
-        if (! $token) {
+        if (!$token) {
             throw ValidationException::withMessages([
                 'email' => ['Неверный email или пароль.'],
             ]);
