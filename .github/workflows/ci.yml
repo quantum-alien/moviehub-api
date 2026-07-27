@@ -12,11 +12,11 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:15
         env:
-          POSTGRES_DB: moviehub_test
-          POSTGRES_USER: moviehub
-          POSTGRES_PASSWORD: secret
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
         options: >-
