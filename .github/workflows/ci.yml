@@ -9,21 +9,27 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: 127.0.0.1
+      DB_DATABASE: moviehub_test
+      DB_USERNAME: moviehub
+      DB_PASSWORD: secret
+      REDIS_HOST: 127.0.0.1
 
     services:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: moviehub_test
+          POSTGRES_USER: moviehub
+          POSTGRES_PASSWORD: secret
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U moviehub -d moviehub_test"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
       redis:
         image: redis:7-alpine
@@ -59,23 +65,12 @@ jobs:
         run: php artisan jwt:secret --force
 
       - name: Run migrations
-        env:
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: moviehub_test
-          DB_USERNAME: moviehub
-          DB_PASSWORD: secret
         run: php artisan migrate --force
 
       - name: Run Pint (code style)
         run: vendor/bin/pint --test
 
       - name: Run tests with coverage
-        env:
-          DB_HOST: 127.0.0.1
-          DB_DATABASE: moviehub_test
-          DB_USERNAME: moviehub
-          DB_PASSWORD: secret
-          REDIS_HOST: 127.0.0.1
         run: vendor/bin/pest --coverage --min=70
 
   docker-build:
