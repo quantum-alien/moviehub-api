@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 use App\DTO\MovieData;
 use App\Models\Movie;
@@ -24,4 +25,4 @@ it('создаёт фильм и привязывает жанры через р
     );
 
     $service->create($data);
-})->skip(fn () => ! class_exists(\Mockery::class), 'Mockery недоступен в окружении');
+})->skip(fn () => !class_exists(\Mockery::class), 'Mockery недоступен в окружении');
