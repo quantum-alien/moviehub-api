@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Events;
@@ -10,5 +11,7 @@ class ReviewSaved
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public readonly int $movieId) {}
+    public function __construct(public readonly int $movieId)
+    {
+    }
 }

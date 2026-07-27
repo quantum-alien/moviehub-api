@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
+use App\Models\Movie;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreMovieRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create', \App\Models\Movie::class) ?? false;
+        return $this->user()?->can('create', Movie::class) ?? false;
     }
 
     public function rules(): array
