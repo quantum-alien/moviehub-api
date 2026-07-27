@@ -1,50 +1,50 @@
 # MovieHub API
 
-REST API сервиса просмотра фильмов: каталог, жанры, отзывы с рейтингом, избранное. Пет-проект, спроектированный по практикам продакшн backend-разработки — слоистая архитектура, асинхронная обработка, кэширование, тесты, CI.
+A REST API for a movie discovery and management platform featuring a movie catalog, genres, user reviews with ratings, and favorites. This pet project is built using production-oriented backend development practices, including a layered architecture, asynchronous processing, caching, automated testing, and continuous integration.
 
-## Стек
+## Tech Stack
 
-| Слой              | Технология                          |
-|-------------------|--------------------------------------|
-| Язык / фреймворк  | PHP 8.3, Laravel 12                  |
-| БД                | PostgreSQL 16                        |
-| Кэш / очереди     | Redis 7                              |
-| Аутентификация    | JWT (tymon/jwt-auth)                 |
-| Документация API  | Swagger / OpenAPI (l5-swagger)       |
-| Тесты             | Pest / PHPUnit                       |
-| Контейнеризация   | Docker, Docker Compose               |
-| CI                | GitHub Actions                       |
+| Layer | Technology |
+|--------|------------|
+| Language / Framework | PHP 8.3, Laravel 12 |
+| Database | PostgreSQL 16 |
+| Cache / Queues | Redis 7 |
+| Authentication | JWT (`tymon/jwt-auth`) |
+| API Documentation | Swagger / OpenAPI (`l5-swagger`) |
+| Testing | Pest / PHPUnit |
+| Containerization | Docker, Docker Compose |
+| CI | GitHub Actions |
 
-## Архитектура
+## Architecture
 
-Проект построен по слоистой архитектуре с чётким разделением ответственности:
+The project follows a layered architecture with clear separation of responsibilities:
 
 ```
-Controller → FormRequest (валидация) → DTO → Service (бизнес-логика) → Repository (доступ к данным) → Model
+Controller → FormRequest (validation) → DTO → Service (business logic) → Repository (data access) → Model
 ```
 
-- **DTO** — типизированные неизменяемые объекты для передачи данных между слоями вместо "сырых" массивов из запроса.
-- **Repository** — доступ к данным спрятан за интерфейсом (`MovieRepositoryInterface`, `ReviewRepositoryInterface`), реализация биндится в `AppServiceProvider`. Это позволяет подменять источник данных в тестах и не завязывать бизнес-логику на Eloquent напрямую.
-- **Service** — бизнес-правила: кэширование списков в Redis, инвалидация кэша, проверка дублей отзывов, генерация событий.
-- **Events/Listeners/Jobs** — сохранение отзыва публикует событие `ReviewSaved`, слушатель ставит в очередь джобу пересчёта среднего рейтинга фильма — тяжёлая агрегация не блокирует ответ пользователю.
-- **Policies** — авторизация вынесена из контроллеров (`MoviePolicy`, `ReviewPolicy`): создавать/редактировать фильмы могут модераторы и админы, отзывы редактирует только автор.
+- **DTO** — strongly typed immutable objects used to transfer data between layers instead of passing raw request arrays.
+- **Repository** — data access is abstracted behind interfaces (`MovieRepositoryInterface`, `ReviewRepositoryInterface`), with concrete implementations registered in `AppServiceProvider`. This allows repositories to be easily mocked during testing and keeps business logic independent of Eloquent.
+- **Service** — contains business rules such as Redis caching, cache invalidation, duplicate review prevention, and event dispatching.
+- **Events / Listeners / Jobs** — when a review is created or updated, a `ReviewSaved` event is dispatched. Its listener queues a `RecalculateMovieRatingJob`, ensuring expensive rating aggregation is performed asynchronously without delaying the API response.
+- **Policies** — authorization is separated from controllers (`MoviePolicy`, `ReviewPolicy`). Only moderators and administrators can create or edit movies, while reviews can only be edited by their authors.
 
 ```
 moviehub-api/
 ├── app/
 │   ├── DTO/                  # MovieData, ReviewData, MovieFilterData
-│   ├── Services/              # MovieService, ReviewService
+│   ├── Services/             # MovieService, ReviewService
 │   ├── Repositories/
-│   │   ├── Contracts/         # интерфейсы
-│   │   └── Eloquent/          # реализации
+│   │   ├── Contracts/        # Repository interfaces
+│   │   └── Eloquent/         # Eloquent implementations
 │   ├── Models/
 │   ├── Http/
 │   │   ├── Controllers/Api/V1/
 │   │   ├── Requests/
 │   │   └── Resources/
-│   ├── Jobs/                  # RecalculateMovieRatingJob
-│   ├── Events/                # ReviewSaved
-│   ├── Listeners/             # RecalculateMovieRating
+│   ├── Jobs/                 # RecalculateMovieRatingJob
+│   ├── Events/               # ReviewSaved
+│   ├── Listeners/            # RecalculateMovieRating
 │   ├── Policies/
 │   └── Exceptions/
 ├── database/
@@ -59,10 +59,10 @@ moviehub-api/
 └── .github/workflows/ci.yml
 ```
 
-## Быстрый старт
+## Quick Start
 
 ```bash
-git clone <repo> moviehub-api
+git clone <repository-url> moviehub-api
 cd moviehub-api
 cp .env.example .env
 
@@ -73,55 +73,85 @@ docker compose exec app php artisan jwt:secret
 docker compose exec app php artisan migrate --seed
 ```
 
-API будет доступно на `http://localhost:8000/api/v1`.
-Swagger-документация: `http://localhost:8000/api/documentation`.
+The API will be available at:
 
-Тестовые учётки после сидинга:
-- `admin@moviehub.test` / `password`
-- `moderator@moviehub.test` / `password`
+```
+http://localhost:8000/api/v1
+```
 
-## Основные эндпоинты
+Swagger documentation:
 
-| Метод  | Путь                          | Описание                          | Доступ         |
-|--------|-------------------------------|------------------------------------|----------------|
-| POST   | `/auth/register`              | Регистрация                        | Публичный      |
-| POST   | `/auth/login`                 | Вход, выдача JWT                   | Публичный      |
-| POST   | `/auth/refresh`                | Обновление токена                  | Авторизован    |
-| GET    | `/movies`                     | Список фильмов (фильтры, сортировка, пагинация) | Публичный |
-| GET    | `/movies/{slug}`               | Детали фильма                      | Публичный      |
-| POST   | `/movies`                     | Создать фильм                      | Модератор/админ|
-| PUT    | `/movies/{movie}`              | Обновить фильм                     | Модератор/админ|
-| DELETE | `/movies/{movie}`              | Удалить фильм                      | Админ          |
-| GET    | `/movies/{movie}/reviews`      | Отзывы на фильм                    | Публичный      |
-| POST   | `/movies/{movie}/reviews`      | Оставить отзыв                     | Авторизован    |
-| PUT    | `/reviews/{review}`            | Изменить свой отзыв                | Автор          |
-| DELETE | `/reviews/{review}`            | Удалить отзыв                      | Автор/модератор|
-| GET    | `/favorites`                   | Список избранного                  | Авторизован    |
-| POST   | `/movies/{movie}/favorite`     | Добавить в избранное               | Авторизован    |
+```
+http://localhost:8000/api/documentation
+```
 
-Полный список параметров фильтрации, схемы запросов/ответов — в Swagger UI.
+### Seeded Test Accounts
 
-## Тесты
+- **Administrator**
+  - Email: `admin@moviehub.test`
+  - Password: `password`
+
+- **Moderator**
+  - Email: `moderator@moviehub.test`
+  - Password: `password`
+
+## Main Endpoints
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| POST | `/auth/register` | Register a new account | Public |
+| POST | `/auth/login` | Authenticate and receive a JWT | Public |
+| POST | `/auth/refresh` | Refresh JWT token | Authenticated |
+| GET | `/movies` | List movies (filtering, sorting, pagination) | Public |
+| GET | `/movies/{slug}` | Retrieve movie details | Public |
+| POST | `/movies` | Create a new movie | Moderator/Admin |
+| PUT | `/movies/{movie}` | Update a movie | Moderator/Admin |
+| DELETE | `/movies/{movie}` | Delete a movie | Admin |
+| GET | `/movies/{movie}/reviews` | List movie reviews | Public |
+| POST | `/movies/{movie}/reviews` | Submit a review | Authenticated |
+| PUT | `/reviews/{review}` | Update your review | Author |
+| DELETE | `/reviews/{review}` | Delete a review | Author/Moderator |
+| GET | `/favorites` | List favorite movies | Authenticated |
+| POST | `/movies/{movie}/favorite` | Add a movie to favorites | Authenticated |
+
+Complete request/response schemas and filtering options are available in the Swagger UI.
+
+## Testing
+
+Run the test suite:
 
 ```bash
 docker compose exec app vendor/bin/pest
+```
+
+Run tests with code coverage:
+
+```bash
 docker compose exec app vendor/bin/pest --coverage
 ```
 
-Тесты покрывают: аутентификацию, CRUD и авторизацию по фильмам, создание/защиту от дублей отзывов, асинхронный пересчёт рейтинга, DTO.
+The test suite covers:
 
-## CI
+- Authentication
+- Movie CRUD operations
+- Authorization policies
+- Duplicate review prevention
+- Asynchronous movie rating recalculation
+- DTO validation and behavior
 
-`.github/workflows/ci.yml` на каждый push/PR:
-1. Поднимает PostgreSQL и Redis как сервисы
-2. Устанавливает зависимости, прогоняет миграции
-3. Проверяет код-стайл (`laravel/pint`)
-4. Запускает тесты с покрытием (порог — 70%)
-5. Собирает Docker-образ
+## Continuous Integration
 
-## Что дальше можно добавить
+The GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and pull request and performs the following steps:
 
-- Полнотекстовый поиск по описанию фильмов (PostgreSQL `tsvector` или Meilisearch)
-- Rate limiting по пользователю, а не только по IP
-- Загрузка нескольких изображений на фильм (кадры, постеры разных размеров) через очередь обработки изображений
-- WebSocket-уведомления о новых отзывах через Laravel Reverb
+1. Starts PostgreSQL and Redis service containers.
+2. Installs project dependencies and runs database migrations.
+3. Checks code style using `laravel/pint`.
+4. Executes the test suite with code coverage (minimum threshold: **70%**).
+5. Builds the Docker image.
+
+## Future Improvements
+
+- Full-text movie search using PostgreSQL `tsvector` or Meilisearch.
+- User-based rate limiting instead of IP-based limits.
+- Support for multiple movie images (screenshots and posters) with asynchronous image processing.
+- Real-time notifications for new reviews using Laravel Reverb WebSockets.
