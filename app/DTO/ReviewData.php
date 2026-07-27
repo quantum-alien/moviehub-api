@@ -1,35 +1,14 @@
 <?php
-
 declare(strict_types=1);
 
-namespace App\DTO;
+namespace App\Events;
 
-final readonly class ReviewData
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
+
+class ReviewSaved
 {
-    public function __construct(
-        public int $movieId,
-        public int $userId,
-        public int $rating,
-        public ?string $comment,
-    ) {}
+    use Dispatchable, SerializesModels;
 
-    public static function fromArray(array $data, int $movieId, int $userId): self
-    {
-        return new self(
-            movieId: $movieId,
-            userId: $userId,
-            rating: (int) $data['rating'],
-            comment: $data['comment'] ?? null,
-        );
-    }
-
-    public function toPersistArray(): array
-    {
-        return [
-            'movie_id' => $this->movieId,
-            'user_id' => $this->userId,
-            'rating' => $this->rating,
-            'comment' => $this->comment,
-        ];
-    }
+    public function __construct(public readonly int $movieId) {}
 }
