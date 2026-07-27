@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
@@ -50,7 +52,9 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! $token = JWTAuth::attempt($credentials)) {
+        $token = JWTAuth::attempt($credentials);
+
+        if (! $token) {
             throw ValidationException::withMessages([
                 'email' => ['Неверный email или пароль.'],
             ]);

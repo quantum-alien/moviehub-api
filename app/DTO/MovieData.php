@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 use Illuminate\Http\UploadedFile;
@@ -15,7 +17,9 @@ final readonly class MovieData
         public array $genreIds,
         public ?int $addedBy = null,
         public ?UploadedFile $poster = null,
-    ) {}
+    )
+    {
+    }
 
     public static function fromArray(array $data, ?int $userId = null): self
     {

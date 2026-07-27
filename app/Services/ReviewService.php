@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\DTO\ReviewData;
@@ -25,7 +27,7 @@ class ReviewService
         $existing = $this->reviews->findByMovieAndUser($data->movieId, $data->userId);
 
         if ($existing !== null) {
-            throw new ReviewAlreadyExistsException();
+            throw new ReviewAlreadyExistsException;
         }
 
         $review = $this->reviews->create($data->toPersistArray());

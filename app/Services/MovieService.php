@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\DTO\MovieData;
@@ -61,7 +63,7 @@ class MovieService
 
         $movie = $this->movies->create($attributes);
 
-        if (! empty($data->genreIds)) {
+        if (!empty($data->genreIds)) {
             $this->movies->syncGenres($movie, $data->genreIds);
         }
 
@@ -83,7 +85,7 @@ class MovieService
 
         $movie = $this->movies->update($movie, $attributes);
 
-        if (! empty($data->genreIds)) {
+        if (!empty($data->genreIds)) {
             $this->movies->syncGenres($movie, $data->genreIds);
         }
 
