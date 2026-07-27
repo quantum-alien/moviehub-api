@@ -1,4 +1,4 @@
-# MovieHub API hui
+# MovieHub API
 
 A REST API for a movie discovery and management platform featuring a movie catalog, genres, user reviews with ratings, and favorites. This pet project is built using production-oriented backend development practices, including a layered architecture, asynchronous processing, caching, automated testing, and continuous integration.
 
