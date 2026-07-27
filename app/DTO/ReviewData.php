@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\DTO;
 
@@ -9,8 +10,7 @@ final readonly class ReviewData
         public int $userId,
         public int $rating,
         public ?string $comment,
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data, int $movieId, int $userId): self
     {
