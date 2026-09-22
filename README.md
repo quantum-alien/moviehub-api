@@ -62,7 +62,7 @@ moviehub-api/
 ## Quick Start
 
 ```bash
-git clone <repository-url> moviehub-api
+git clone https://github.com/quantum-alien/moviehub-api/ moviehub-api
 cd moviehub-api
 cp .env.example .env
 
